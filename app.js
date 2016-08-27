@@ -21,6 +21,7 @@ require( 'dotenv' ).config( {silent: true} );
 var express = require( 'express' );  // app server
 var bodyParser = require( 'body-parser' );  // parser for post requests
 var watson = require( 'watson-developer-cloud' );  // watson sdk
+var http = require('http');
 
 // The following requires are needed for logging purposes
 var uuid = require( 'uuid' );
@@ -53,6 +54,11 @@ var conversation = watson.conversation( {
   version: 'v1'
 } );
 
+// Create service wrapper for AlchemyAPI
+var alchemy_language = watson.alchemy_language({
+  api_key: process.env.ALCHEMY_API_KEY || 'YOUR_API_KEY'
+});
+
 // Endpoint to be call from the client side
 app.post( '/api/message', function(req, res) {
   var workspace = process.env.WORKSPACE_ID || '<workspace-id>';
@@ -71,22 +77,79 @@ app.post( '/api/message', function(req, res) {
     context: {},
     input: {}
   };
+  var params = null;
   if ( req.body ) {
     if ( req.body.input ) {
       payload.input = req.body.input;
+      params = {text: req.body.input.text};
     }
     if ( req.body.context ) {
       // The client must maintain context/state
       payload.context = req.body.context;
     }
   }
+
+  if(params == null) {
+   params = {text: "Some sample input"}
+  }
+
+  alchemy_language.entities(params, function(error, response) {
+        if (error) {
+          return res.status(error.code || 500).json(error);
+        }
+        if(response != null) {
+          var entities = response.entities;
+          var cityList = entities.map(function(entry) {
+                if(entry.type == "City") {
+                 return(entry.text);
+                }
+          });
+	  cityList = cityList.filter(function(entry) {
+		if(entry != null) {
+		 return(entry);
+		}
+	  });
+	  if(cityList.length > 0) {
+	   payload.context.appCity = cityList[0];
+	  } else {
+	   delete payload.context.appCity;
+	  }
+          var stateList = entities.map(function(entry) {
+                if(entry.type == "StateOrCounty") {
+                 return(entry.text);
+                }
+          });
+
+	  stateList = stateList.filter(function(entry) {
+		if(entry != null) {
+		 return(entry);
+		}
+	  });
+	  if (stateList.length > 0) {
+	   payload.context.appST = stateList[0];
+	  } else {
+	   delete payload.context.appST;
+	  }
+        } else {
+	 if(payload.context.appCity) {
+	  delete payload.context.appCity;
+	 }
+	 if(payload.context.appST) {
+	  delete payload.context.appST;
+	 }
+	 console.log('response from Alchemy Language entity extraction is null');
+        }
   // Send the input to the conversation service
-  conversation.message( payload, function(err, data) {
-    if ( err ) {
-      return res.status( err.code || 500 ).json( err );
-    }
-    return res.json( updateMessage( payload, data ) );
-  } );
+        payload.context.entities = entities;
+        conversation.message(payload, function(err, data) {
+                if (err) {
+                  return res.status(err.code || 500).json(err);
+                }
+                //return res.json(updateMessage(payload, data));
+                updateResponse(res, data);
+         });
+
+  });
 } );
 
 /**
@@ -131,6 +194,51 @@ function updateMessage(input, response) {
   }
   return response;
 }
+
+// Weather API key (https://www.wunderground.com/weather/api/)
+var weather_api_key = process.env.WEATHER_API_KEY || 'YOUR_WEATHER_API_KEY';
+function updateResponse(res, data) {
+  var weatherflag = checkWeather(data);
+  if(weatherflag) {
+   var path = null;
+   if((data.context.appCity != null) && (data.context.appST != null)) {
+     //path = '/api/' + weather_api_key + '/conditions/q/' + data.context.appST + '/' + data.context.appCity + '.json';
+     path = '/api/' + weather_api_key + '/forecast/q/' + data.context.appST + '/' + data.context.appCity + '.json';
+   }
+   if (path == null) {
+    return res.json(data)
+   }
+   var options = {
+     host: 'api.wunderground.com',
+     path: path
+   };
+   http.get(options, function(resp) {
+     var chunkText = '';
+     resp.on('data', function(chunk) {
+     chunkText += chunk.toString('utf8');
+     });
+
+     resp.on('end', function() {
+	var chunkJSON = JSON.parse(chunkText);
+	var forecast = chunkJSON.forecast.txt_forecast.forecastday[0].fcttext;
+	data.output.text = 'The weather in ' + data.context.appCity + ', ' + data.context.appST + ' will be ' + forecast;
+	return res.json(data);
+     });
+    }).on('error', function(e) {
+       console.log('failed');
+    });
+   } else {
+     return res.json(data);
+   }
+};
+
+function checkWeather(data) {
+  //return (data.context != null) && (data.context.appCity != null) && (data.context.appST != null);
+  return data.intents && data.intents.length > 0 && data.intents[0].intent === 'weather'
+     && (data.context != null) && (data.context.appCity != null) && (data.context.appST != null);
+};
+
+
 
 if ( cloudantUrl ) {
   // If logging has been enabled (as signalled by the presence of the cloudantUrl) then the
