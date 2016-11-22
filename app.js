@@ -22,11 +22,17 @@ var express = require( 'express' );  // app server
 var bodyParser = require( 'body-parser' );  // parser for post requests
 var watson = require( 'watson-developer-cloud' );  // watson sdk
 var http = require('http');
+var https = require('https');
+var request = require('request');
+var axios = require('axios');
+// var unirest = require('unirest');
+
 
 // The following requires are needed for logging purposes
 var uuid = require( 'uuid' );
 var vcapServices = require( 'vcap_services' );
 var basicAuth = require( 'basic-auth-connect' );
+
 
 // The app owner may optionally configure a cloudand db to track user input.
 // This cloudand db is not required, the app will operate without it.
@@ -38,6 +44,8 @@ if ( cloudantCredentials ) {
   cloudantUrl = cloudantCredentials.url;
 }
 cloudantUrl = cloudantUrl || process.env.CLOUDANT_URL; // || '<cloudant_url>';
+
+
 var logs = null;
 var app = express();
 
@@ -72,11 +80,13 @@ app.post( '/api/message', function(req, res) {
       }
     } );
   }
+
   var payload = {
     workspace_id: workspace,
     context: {},
     input: {}
   };
+
   var params = null;
   if ( req.body ) {
     if ( req.body.input ) {
@@ -92,6 +102,8 @@ app.post( '/api/message', function(req, res) {
   if(params == null) {
    params = {text: "Some sample input"}
   }
+
+  // searching for entities from alchemy language API
 
   alchemy_language.entities(params, function(error, response) {
         if (error) {
@@ -109,13 +121,16 @@ app.post( '/api/message', function(req, res) {
 		 return(entry);
 		}
 	  });
+
+    console.log('cityList: ', cityList);
+
 	  if(cityList.length > 0) {
 	   payload.context.appCity = cityList[0];
 	  } else {
 	   delete payload.context.appCity;
 	  }
           var stateList = entities.map(function(entry) {
-                if(entry.type == "StateOrCounty") {
+                if(entry.type == "StateOrCounty") {  //StateOrCounty
                  return(entry.text);
                 }
           });
@@ -125,12 +140,15 @@ app.post( '/api/message', function(req, res) {
 		 return(entry);
 		}
 	  });
+
+    console.log('stateList: ', stateList);
+
 	  if (stateList.length > 0) {
 	   payload.context.appST = stateList[0];
 	  } else {
 	   delete payload.context.appST;
 	  }
-        } else {
+  } /* The following code for null response*/ else {
 	 if(payload.context.appCity) {
 	  delete payload.context.appCity;
 	 }
@@ -140,17 +158,22 @@ app.post( '/api/message', function(req, res) {
 	 console.log('response from Alchemy Language entity extraction is null');
         }
   // Send the input to the conversation service
+  console.log('params:', params);
+  console.log('payload: ', payload);
         payload.context.entities = entities;
+
         conversation.message(payload, function(err, data) {
                 if (err) {
                   return res.status(err.code || 500).json(err);
                 }
-                //return res.json(updateMessage(payload, data));
+
+                // updating response
                 updateResponse(res, data);
+
          });
 
   });
-} );
+});
 
 /**
  * Updates the response text using the intent confidence
@@ -158,85 +181,57 @@ app.post( '/api/message', function(req, res) {
  * @param  {Object} response The response from the Conversation service
  * @return {Object}          The response with the updated message
  */
-function updateMessage(input, response) {
-  var responseText = null;
-  var id = null;
-  if ( !response.output ) {
-    response.output = {};
-  } else {
-    if ( logs ) {
-      // If the logs db is set, then we want to record all input and responses
-      id = uuid.v4();
-      logs.insert( {'_id': id, 'request': input, 'response': response, 'time': new Date()});
-    }
-    return response;
-  }
-  if ( response.intents && response.intents[0] ) {
-    var intent = response.intents[0];
-    // Depending on the confidence of the response the app can return different messages.
-    // The confidence will vary depending on how well the system is trained. The service will always try to assign
-    // a class/intent to the input. If the confidence is low, then it suggests the service is unsure of the
-    // user's intent . In these cases it is usually best to return a disambiguation message
-    // ('I did not understand your intent, please rephrase your question', etc..)
-    if ( intent.confidence >= 0.75 ) {
-      responseText = 'I understood your intent was ' + intent.intent;
-    } else if ( intent.confidence >= 0.5 ) {
-      responseText = 'I think your intent was ' + intent.intent;
-    } else {
-      responseText = 'I did not understand your intent';
-    }
-  }
-  response.output.text = responseText;
-  if ( logs ) {
-    // If the logs db is set, then we want to record all input and responses
-    id = uuid.v4();
-    logs.insert( {'_id': id, 'request': input, 'response': response, 'time': new Date()});
-  }
-  return response;
-}
 
-// Weather API key (https://www.wunderground.com/weather/api/)
-var weather_api_key = process.env.WEATHER_API_KEY || 'YOUR_WEATHER_API_KEY';
+
 function updateResponse(res, data) {
-  var weatherflag = checkWeather(data);
-  if(weatherflag) {
-   var path = null;
-   if((data.context.appCity != null) && (data.context.appST != null)) {
-     //path = '/api/' + weather_api_key + '/conditions/q/' + data.context.appST + '/' + data.context.appCity + '.json';
-     path = '/api/' + weather_api_key + '/forecast/q/' + data.context.appST + '/' + data.context.appCity + '.json';
-   }
-   if (path == null) {
-    return res.json(data)
-   }
-   var options = {
-     host: 'api.wunderground.com',
-     path: path
-   };
-   http.get(options, function(resp) {
-     var chunkText = '';
-     resp.on('data', function(chunk) {
-     chunkText += chunk.toString('utf8');
-     });
+  if (data.intents.length > 0 && data.intents[0].intent === 'get_weather') {
+      const GOOGLE_API = process.env.GOOGLE_API_KEY;
+      var cityQuery = data.context.appCity;
+      var url_geolocation = `https://maps.googleapis.com/maps/api/geocode/json?address=${cityQuery}&key=${GOOGLE_API}`;
+      axios.get(url_geolocation).then(function(response){
+          console.log(response.data.results[0].geometry.location);
+          var location = {
+              lat: response.data.results[0].geometry.location.lat,
+              lng: response.data.results[0].geometry.location.lng
+          };
+          const DARK_SKY_API = process.env.DARKSKY_API_KEY;
+          var url_weather = `https://api.darksky.net/forecast/${DARK_SKY_API}/${location.lat},${location.lng}`;
+          //console.log(data.output.text);
+          return axios.get(url_weather);
+      }).then(function(response){
+          var summary = response.data.currently.summary;
+          var apparentTemperature = response.data.currently.apparentTemperature;
+          var city = data.context.appCity;
+          data.output.text = `${summary} in ${city} with temperature ${(apparentTemperature - 32).toFixed(2)} C.`;
+          return res.json(data);
+      }).catch(function(error){
+          console.log(error);
+      });
+  } else {
+      return res.json(data);
+  }
 
-     resp.on('end', function() {
-	var chunkJSON = JSON.parse(chunkText);
-	var forecast = chunkJSON.forecast.txt_forecast.forecastday[0].fcttext;
-	data.output.text = 'The weather in ' + data.context.appCity + ', ' + data.context.appST + ' will be ' + forecast;
-	return res.json(data);
-     });
-    }).on('error', function(e) {
-       console.log('failed');
-    });
-   } else {
-     return res.json(data);
-   }
 };
+
+
+
+// create getWeatherApi function
+  function getWeatherApi(){
+    const DARK_SKY_API = process.env.DARKSKY_API_KEY;
+    var url_weather = `https://api.darksky.net/forecast/${DARK_SKY_API}/42.3601,71.0589`;
+    axios.get(url_weather)
+     .then(function(response){
+        console.log('response-data: ', response.data);
+      }).catch(function(error){
+        console.log(error);
+    });
+  };
 
 function checkWeather(data) {
   //return (data.context != null) && (data.context.appCity != null) && (data.context.appST != null);
-  return data.intents && data.intents.length > 0 && data.intents[0].intent === 'weather'
-     && (data.context != null) && (data.context.appCity != null) && (data.context.appST != null);
-};
+  return data.intents && data.intents.length > 0 && data.intents[0].intent === 'get_weather'
+     && (data.context != null) && (data.context.appCity != null);
+}
 
 
 
