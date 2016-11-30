@@ -21,7 +21,7 @@ div {
   width: 3.125rem;
   height: 3.125rem;
   border-radius: 1.5625rem;
-  background: #AB72F8;
+  background: #0980b4;
   top: 0.3125rem;
   right: 0.3125rem;
   line-height: 3.125rem;
@@ -46,6 +46,7 @@ div {
 #contentParent {
   height: 100%;
 }
+
 
 .responsive-columns-wrapper {
   display: -ms-flexbox;
@@ -118,7 +119,7 @@ div {
   color: #fff;
   letter-spacing: 0.015rem;
   line-height: 1.3125rem;
-  background: #00B4A0;
+  background: #0980b4;
   border-radius: 1.25rem;
   border-bottom-right-radius: 0;
   text-align: left;
@@ -144,7 +145,7 @@ div {
   right: 0;
   height: 0.375rem;
   width: 0.5rem;
-  background: #1cb3a0;
+  background: #0980b4;
 }
 
 .from-user .message-inner:after {
@@ -177,7 +178,7 @@ div {
 
 .from-watson.latest.top p:before {
   content: ".";
-  color: #9855D4;
+  color: #1077d4;
   background-image: url("../img/marker_image.png");
   background-size: 0.3125rem 1.3125rem;
   position: absolute;
@@ -205,7 +206,7 @@ div {
 }
 
 #textInput.underline {
-  border-bottom: 2px solid #00B4A0;
+  border-bottom: 2px solid #0980b4;
 }
 
 ::-webkit-input-placeholder {
@@ -299,7 +300,7 @@ pre {
 }
 
 .boolean, .null, .number {
-  color: #CE8EFF;
+  color: #0980b4;
 }
 
 .key {
@@ -428,4 +429,12 @@ html{
   url('../fonts/ibm-glyphs.svg?1b8643#ibm-glyph') format('svg');
   font-weight: normal;
   font-style: normal;
+}
+
+.head-layout {
+  background:url('../img/ibm_watson.jpg');
+  background-size: 10%;
+  background-repeat: no-repeat;
+  background-position: center;
+
 }

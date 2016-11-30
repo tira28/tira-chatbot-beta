@@ -1,5 +1,5 @@
 {
-  "name": "conversation-simple",
+  "name": "tira-chatbot-beta",
   "description": "A simple Node.js based web app which shows how to use the Conversation API to recognize user intents.",
   "version": "0.1.1",
   "main": "server.js",
@@ -15,17 +15,25 @@
     "axios": "^0.15.2",
     "basic-auth-connect": "1.0.0",
     "body-parser": "1.15.1",
+    "botkit": "^0.4.2",
+    "botkit-middleware-watson": "^1.0.0",
+    "cfenv": "^1.0.3",
     "cloudant": "1.4.1",
+    "datejs": "^1.0.0-rc3",
     "dotenv": "^2.0.0",
+    "es6-promise": "^4.0.5",
     "events": "^1.1.1",
     "express": "4.13.4",
     "express-csv": "0.6.0",
     "https": "^1.0.0",
     "nano": "*",
+    "qpx-express": "^16.1.12",
+    "request": "^2.79.0",
     "unirest": "^0.5.1",
     "uuid": "2.0.2",
     "vcap_services": "^0.2.0",
-    "watson-developer-cloud": "^1.12.2"
+    "watson-developer-cloud": "^1.12.2",
+    "yelpv3": "^1.0.1"
   },
   "devDependencies": {
     "babel-eslint": "^6.0.4",

@@ -1,15 +1,22 @@
 ---
 declared-services:
   conversation-service:
-    label: conversation
+    label: Conversation-8z
     plan: free
+  alchemyAPI-service:
+    label: AlchemyAPI-p7
+    plan: free
+  Cloudant NO SQL DB-at:
+    label: Cloudant No SQL DB-at
+    plan: Lite
+
 applications:
-- name: conversation-simple
+- name: tira-chatbot-beta
   command: npm start
   path: .
   memory: 256M
-  instances: 1
-  services:
-  - conversation-service
-  env:
-    NPM_CONFIG_PRODUCTION: false
+- services:
+  - Conversation-8z
+  - AlchemyAPI-p7
+  - Cloudant No SQL DB-at
+

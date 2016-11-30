@@ -1,0 +1,156 @@
+{
+  "kind": "qpxExpress#tripsSearch",
+  "trips": {
+    "kind": "qpxexpress#tripOptions",
+    "requestId": "1db1HsOcgN7M62JK10PW4D",
+    "data": {
+      "kind": "qpxexpress#data",
+      "airport": [
+        {
+          "kind": "qpxexpress#airportData",
+          "code": "AMS",
+          "city": "AMS",
+          "name": "Amsterdam Schiphol Airport"
+        },
+        {
+          "kind": "qpxexpress#airportData",
+          "code": "CDG",
+          "city": "PAR",
+          "name": "Paris Charles de Gaulle"
+        }
+      ],
+      "city": [
+        {
+          "kind": "qpxexpress#cityData",
+          "code": "AMS",
+          "name": "Amsterdam"
+        },
+        {
+          "kind": "qpxexpress#cityData",
+          "code": "PAR",
+          "name": "Paris"
+        }
+      ],
+      "aircraft": [
+        {
+          "kind": "qpxexpress#aircraftData",
+          "code": "318",
+          "name": "Airbus A318"
+        }
+      ],
+      "tax": [
+        {
+          "kind": "qpxexpress#taxData",
+          "id": "CJ_001",
+          "name": "Netherlands Security Service Charge"
+        },
+        {
+          "kind": "qpxexpress#taxData",
+          "id": "RN_001",
+          "name": "Netherlands Passenger Service Charge"
+        }
+      ],
+      "carrier": [
+        {
+          "kind": "qpxexpress#carrierData",
+          "code": "AF",
+          "name": "Air France"
+        }
+      ]
+    },
+    "tripOption": [
+      {
+        "kind": "qpxexpress#tripOption",
+        "saleTotal": "EUR267.53",
+        "id": "388hIvdXKC4RfduIoTkIWJ001",
+        "slice": [
+          {
+            "kind": "qpxexpress#sliceInfo",
+            "duration": 75,
+            "segment": [
+              {
+                "kind": "qpxexpress#segmentInfo",
+                "duration": 75,
+                "flight": {
+                  "carrier": "AF",
+                  "number": "1741"
+                },
+                "id": "GQnftQI3g8imsRSv",
+                "cabin": "COACH",
+                "bookingCode": "U",
+                "bookingCodeCount": 9,
+                "marriedSegmentGroup": "0",
+                "leg": [
+                  {
+                    "kind": "qpxexpress#legInfo",
+                    "id": "LrYCxG4j9+ijnsX+",
+                    "aircraft": "318",
+                    "arrivalTime": "2016-12-02T16:05+01:00",
+                    "departureTime": "2016-12-02T14:50+01:00",
+                    "origin": "AMS",
+                    "destination": "CDG",
+                    "destinationTerminal": "2F",
+                    "duration": 75,
+                    "mileage": 247,
+                    "meal": "Snack or Brunch"
+                  }
+                ]
+              }
+            ]
+          }
+        ],
+        "pricing": [
+          {
+            "kind": "qpxexpress#pricingInfo",
+            "fare": [
+              {
+                "kind": "qpxexpress#fareInfo",
+                "id": "AZl5xQiCgjPf+1NWc9Lms2xauLZSCqELMf0dMA/VHzV/",
+                "carrier": "AF",
+                "origin": "AMS",
+                "destination": "PAR",
+                "basisCode": "U3WKYNL9"
+              }
+            ],
+            "segmentPricing": [
+              {
+                "kind": "qpxexpress#segmentPricing",
+                "fareId": "AZl5xQiCgjPf+1NWc9Lms2xauLZSCqELMf0dMA/VHzV/",
+                "segmentId": "GQnftQI3g8imsRSv"
+              }
+            ],
+            "baseFareTotal": "EUR244.00",
+            "saleFareTotal": "EUR244.00",
+            "saleTaxTotal": "EUR23.53",
+            "saleTotal": "EUR267.53",
+            "passengers": {
+              "kind": "qpxexpress#passengerCounts",
+              "adultCount": 1
+            },
+            "tax": [
+              {
+                "kind": "qpxexpress#taxInfo",
+                "id": "CJ_001",
+                "chargeType": "GOVERNMENT",
+                "code": "CJ",
+                "country": "NL",
+                "salePrice": "EUR10.53"
+              },
+              {
+                "kind": "qpxexpress#taxInfo",
+                "id": "RN_001",
+                "chargeType": "GOVERNMENT",
+                "code": "RN",
+                "country": "NL",
+                "salePrice": "EUR13.00"
+              }
+            ],
+            "fareCalculation": "AMS AF PAR 273.82U3WKYNL9 NUC 273.82 END ROE 0.891079 FARE EUR 244.00 XT 10.53CJ 13.00RN",
+            "latestTicketingTime": "2016-12-02T08:49-05:00",
+            "ptc": "ADT"
+          }
+        ]
+      }
+    ]
+  }
+}

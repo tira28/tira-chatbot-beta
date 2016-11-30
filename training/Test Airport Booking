@@ -1,0 +1,55 @@
+{
+  "output": {
+    "text": "Fine. I need some travel details  from you. What is your departure location?"
+  },
+  "context": {
+    "set": "origin"
+  }
+}
+
+
+{
+  "output": {
+    "text": "Flight from <?$origin_airport?>. What is destination location?"
+  },
+  "context": {
+    "origin_airport": "@airport",
+    "set": "destination"
+  }
+}
+
+
+{
+  "output": {
+    "text": "Flight to <?$destination_airport?>. Departing date?"
+  },
+  "context": {
+    "destination_airport": "@airport"
+  }
+}
+
+{
+  "output": {
+    "text": "Departing on: <?$departure_date?>. Returning date?"
+  },
+  "context": {
+    "departure_date": "@sys-date"
+  }
+}
+
+{
+  "output": {
+    "text": "Returning on: <?$return_date?>. Please wait I'll check the flight data"
+  },
+  "context": {
+    "return_date": "@sys-date"
+  }
+}
+
+{
+  "output": {},
+  "context": {
+    "remarks": "Results",
+    "summary": ""
+  }
+}

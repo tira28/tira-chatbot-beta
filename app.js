@@ -22,11 +22,26 @@ var express = require( 'express' );  // app server
 var bodyParser = require( 'body-parser' );  // parser for post requests
 var watson = require( 'watson-developer-cloud' );  // watson sdk
 var http = require('http');
-var https = require('https');
 var request = require('request');
 var axios = require('axios');
-// var unirest = require('unirest');
+const cfenv = require('cfenv');
+var promise = require('es6-promise').Promise;
 
+
+// Yelp module
+var Yelp = require('yelpv3');
+
+// Credentials for Yelp module
+/*var yelp = new Yelp({
+    app_id: process.env.YELP_APP_ID,
+    app_secret: process.env.YELP_APP_SECRET
+});*/
+
+// Credentials
+const GOOGLE_API_KEY = process.env.GOOGLE_API_KEY;
+
+// URL QPX
+var url_qpx = `https://www.googleapis.com/qpxExpress/v1/trips/search?key=${GOOGLE_API_KEY}`;
 
 // The following requires are needed for logging purposes
 var uuid = require( 'uuid' );
@@ -69,6 +84,8 @@ var alchemy_language = watson.alchemy_language({
 
 // Endpoint to be call from the client side
 app.post( '/api/message', function(req, res) {
+    console.log(process.env.WORKSPACE_ID);
+    console.log("11111");
   var workspace = process.env.WORKSPACE_ID || '<workspace-id>';
   if ( !workspace || workspace === '<workspace-id>' ) {
     return res.json( {
@@ -80,6 +97,7 @@ app.post( '/api/message', function(req, res) {
       }
     } );
   }
+    console.log("22222");
 
   var payload = {
     workspace_id: workspace,
@@ -98,27 +116,36 @@ app.post( '/api/message', function(req, res) {
       payload.context = req.body.context;
     }
   }
+    console.log("33333");
 
   if(params == null) {
    params = {text: "Some sample input"}
   }
 
-  // searching for entities from alchemy language API
+  // Searching for entities from alchemy language API
 
   alchemy_language.entities(params, function(error, response) {
         if (error) {
-          return res.status(error.code || 500).json(error);
+            console.log("44444");
+            console.log(error);
+            return res.status(error.code || 500).json(error);
         }
         if(response != null) {
-          var entities = response.entities;
+            console.log("55555");
+
+            var entities = response.entities;
           var cityList = entities.map(function(entry) {
                 if(entry.type == "City") {
                  return(entry.text);
                 }
           });
-	  cityList = cityList.filter(function(entry) {
+            console.log("66666");
+
+            cityList = cityList.filter(function(entry) {
 		if(entry != null) {
-		 return(entry);
+            console.log("77777");
+
+            return(entry);
 		}
 	  });
 
@@ -157,9 +184,8 @@ app.post( '/api/message', function(req, res) {
 	 }
 	 console.log('response from Alchemy Language entity extraction is null');
         }
-  // Send the input to the conversation service
-  console.log('params:', params);
-  console.log('payload: ', payload);
+
+        // Send the input to the conversation service
         payload.context.entities = entities;
 
         conversation.message(payload, function(err, data) {
@@ -167,11 +193,10 @@ app.post( '/api/message', function(req, res) {
                   return res.status(err.code || 500).json(err);
                 }
 
-                // updating response
+                // function to update response
                 updateResponse(res, data);
-
+                console.log(data);
          });
-
   });
 });
 
@@ -184,10 +209,13 @@ app.post( '/api/message', function(req, res) {
 
 
 function updateResponse(res, data) {
+    // Code for intent equals to get weather
   if (data.intents.length > 0 && data.intents[0].intent === 'get_weather') {
-      const GOOGLE_API = process.env.GOOGLE_API_KEY;
+      //const GOOGLE_API_KEY = process.env.GOOGLE_API_KEY;
       var cityQuery = data.context.appCity;
-      var url_geolocation = `https://maps.googleapis.com/maps/api/geocode/json?address=${cityQuery}&key=${GOOGLE_API}`;
+      var url_geolocation = `https://maps.googleapis.com/maps/api/geocode/json?address=${cityQuery}&key=${GOOGLE_API_KEY}`;
+
+      // call Google geocode API to retrieve city location
       axios.get(url_geolocation).then(function(response){
           console.log(response.data.results[0].geometry.location);
           var location = {
@@ -196,13 +224,148 @@ function updateResponse(res, data) {
           };
           const DARK_SKY_API = process.env.DARKSKY_API_KEY;
           var url_weather = `https://api.darksky.net/forecast/${DARK_SKY_API}/${location.lat},${location.lng}`;
-          //console.log(data.output.text);
+
+          // call dark sky API to retrieve weather data
           return axios.get(url_weather);
       }).then(function(response){
           var summary = response.data.currently.summary;
           var apparentTemperature = response.data.currently.apparentTemperature;
           var city = data.context.appCity;
+
+          // make watson returns weather prediction in selected city
           data.output.text = `${summary} in ${city} with temperature ${(apparentTemperature - 32).toFixed(2)} C.`;
+          return res.json(data);
+      }).catch(function(error){
+          console.log(error);
+      });
+  } else if (data.intents.length > 0 && data.intents[0].intent === 'get_landmarks'){
+      var city = data.context.appCity;
+      var landmarks = data.context.landmarks;
+
+      // Credentials for Yelp module
+      var yelp = new Yelp({
+          app_id: process.env.YELP_APP_ID,
+          app_secret: process.env.YELP_APP_SECRET
+      });
+
+      // Searching using Yelp API
+      yelp.search({
+          term:'sightseeing',
+          location:`${city}`,
+          limit:5
+      }).then(function(response){
+          landmarks = [];
+          var places = JSON.parse(response);
+
+          for (var i = 0; i<places.businesses.length; i++) {
+              var businessName = places.businesses[i].name;
+              landmarks.push(businessName);
+          }
+          console.log(landmarks);
+          data.output.text = `In ${city}, I would like to recommend you to go to: ${landmarks}.`;
+          return res.json(data);
+      }).catch(function(error){
+          console.log(error);
+      });
+  } else if (data.intents.length > 0 && data.intents[0].intent === 'book_ticket' && data.context.remarks === "Results") {
+
+      // Check whether important data has been loaded
+      var travelData = data;
+      var originAirport = travelData.context.origin_airport;
+      var destinationAirport = travelData.context.destination_airport;
+      var departureDate = travelData.context.departure_date;
+      var returnDate = travelData.context.return_date;
+      var originDepartingTime = travelData.context.origin_departing_time;
+      var returningDepartingTime = travelData.context.returning_departing_time;
+
+      // Define flight query
+      var flightQuery;
+      flightQuery = {
+          "request": {
+              "passengers": {"adultCount": 1},
+              "slice": [
+                  {
+                      "origin": `${originAirport}`,
+                      "destination": `${destinationAirport}`,
+                      "date": `${departureDate}`,
+                      "permittedCarrier": ['KL'],
+                      "maxStops": 0,
+                      "permittedDepartureTime" : {
+                          "kind": "qpxexpress#timeOfDayRange",
+                          "earliestTime":`${originDepartingTime}`,
+                          "latestTime": '23:59'
+                      },
+                      "solutions": 1
+                  },
+                  {
+                      "origin": `${destinationAirport}`,
+                      "destination": `${originAirport}`,
+                      "date": `${returnDate}`,
+                      "permittedCarrier": ['KL'],
+                      "maxStops": 0,
+                      "permittedDepartureTime" : {
+                          "kind": "qpxexpress#timeOfDayRange",
+                          "earliestTime":`${returningDepartingTime}`,
+                          "latestTime": '23:59'
+                      },
+                      "solutions": 1
+                  },
+              ]
+          }
+      };
+
+      // Calling Google QPX API
+      axios.post(url_qpx,flightQuery).then(function(response){
+          var trips = response.data.trips;
+          var tripOption = trips.tripOption[0];
+          var summary = {
+              departure_date: flightQuery.request.slice[0].date,
+              return_date: flightQuery.request.slice[1].date,
+              origin_airport_code: trips.data.airport[0].code,
+              origin_airport_name: trips.data.airport[0].name,
+              origin_city_name: trips.data.city[0].name,
+              destination_airport_code: trips.data.airport[1].code,
+              destination_airport_name: trips.data.airport[1].name,
+              destination_city_name:trips.data.city[1].name,
+              carrier: trips.data.carrier[0].name,
+              departing_flight_code: tripOption.slice[0].segment[0].flight.carrier,
+              departing_flight_number: tripOption.slice[0].segment[0].flight.number,
+              returning_flight_code: tripOption.slice[1].segment[0].flight.carrier,
+              returning_flight_number: tripOption.slice[1].segment[0].flight.number,
+              travel_fare: tripOption.saleTotal
+          };
+
+          var flyingTime = {
+              departing_flight_departure_time: tripOption.slice[0].segment[0].leg[0].departureTime,
+              departing_flight_arrival_time: tripOption.slice[0].segment[0].leg[0].arrivalTime,
+              returning_flight_departure_time: tripOption.slice[1].segment[0].leg[0].departureTime,
+              returning_flight_arrival_time: tripOption.slice[1].segment[0].leg[0].arrivalTime
+          };
+
+          var departingDepartureTimeHour =  new Date(flyingTime.departing_flight_departure_time).getHours();
+          var departingDepartureTimeMinutes =  new Date(flyingTime.departing_flight_departure_time).getMinutes();
+          var departingDepartureTime = `${departingDepartureTimeHour}:${departingDepartureTimeMinutes}`;
+
+          var departingArrivalTimeHour = new Date(flyingTime.departing_flight_arrival_time).getHours();
+          var departingArrivalTimeMinutes = new Date(flyingTime.departing_flight_arrival_time).getMinutes();
+          var departingArrivalTime = `${departingArrivalTimeHour}:${departingArrivalTimeMinutes}`;
+
+          var returningDepartureTimeHour = new Date(flyingTime.returning_flight_departure_time).getHours();
+          var returningDepartureTimeMinutes = new Date(flyingTime.returning_flight_departure_time).getMinutes();
+          var returningDepartureTime = `${returningDepartureTimeHour}:${returningDepartureTimeMinutes}`;
+
+          var returningArrivalTimeHour = new Date(flyingTime.returning_flight_arrival_time).getHours();
+          var returningArrivalTimeMinutes = new Date(flyingTime.returning_flight_arrival_time).getHours();
+          var returningArrivalTime = `${returningArrivalTimeHour}:${returningArrivalTimeMinutes}`;
+
+          data.output.text=`Thank you for flying with KLM Royal Dutch Airlines.\n Here is your flight details: 
+          Your departing flight code is: ${summary.departing_flight_code} ${summary.departing_flight_number}.\n 
+          Earliest possible departing time: ${departingDepartureTime}.\n
+          Arrival time: ${departingArrivalTime}.\n
+          Your returning flight code is: ${summary.returning_flight_code} ${summary.returning_flight_number}.\n
+          Earliest possible departing time: ${returningDepartureTime}.\n
+          Arrival time: ${returningArrivalTime}.\n
+          Fare: ${summary.travel_fare}`;
           return res.json(data);
       }).catch(function(error){
           console.log(error);
@@ -210,29 +373,7 @@ function updateResponse(res, data) {
   } else {
       return res.json(data);
   }
-
-};
-
-
-
-// create getWeatherApi function
-  function getWeatherApi(){
-    const DARK_SKY_API = process.env.DARKSKY_API_KEY;
-    var url_weather = `https://api.darksky.net/forecast/${DARK_SKY_API}/42.3601,71.0589`;
-    axios.get(url_weather)
-     .then(function(response){
-        console.log('response-data: ', response.data);
-      }).catch(function(error){
-        console.log(error);
-    });
-  };
-
-function checkWeather(data) {
-  //return (data.context != null) && (data.context.appCity != null) && (data.context.appST != null);
-  return data.intents && data.intents.length > 0 && data.intents[0].intent === 'get_weather'
-     && (data.context != null) && (data.context.appCity != null);
 }
-
 
 
 if ( cloudantUrl ) {

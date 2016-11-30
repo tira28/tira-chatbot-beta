@@ -1,6 +1,7 @@
 // The Api module is designed to handle all interactions with the server
 
 var Api = (function() {
+
   var requestPayload;
   var responsePayload;
   var messageEndpoint = '/api/message';
@@ -27,7 +28,9 @@ var Api = (function() {
 
   // Send a message request to the server
   function sendRequest(text, context) {
-    // Build request payload
+      console.log("88888");
+
+      // Build request payload
     var payloadToWatson = {};
     if (text) {
       payloadToWatson.input = {
@@ -37,6 +40,7 @@ var Api = (function() {
     if (context) {
       payloadToWatson.context = context;
     }
+      console.log("99999");
 
     // Built http request
     var http = new XMLHttpRequest();
@@ -47,13 +51,17 @@ var Api = (function() {
         Api.setResponsePayload(http.responseText);
       }
     };
+      console.log("00000");
+      console.log(payloadToWatson);
 
-    var params = JSON.stringify(payloadToWatson);
+      var params = JSON.stringify(payloadToWatson);
     // Stored in variable (publicly visible through Api.getRequestPayload)
     // to be used throughout the application
     if (Object.getOwnPropertyNames(payloadToWatson).length !== 0) {
       Api.setRequestPayload(params);
     }
+
+    console.log(params);
 
     // Send request
     http.send(params);
