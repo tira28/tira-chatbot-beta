@@ -13,8 +13,9 @@ var watsonMiddleware = require('botkit-middleware-watson')({
     username: process.env.CONVERSATION_USERNAME,
     password: process.env.CONVERSATION_PASSWORD,
     workspace_id: process.env.WORKSPACE_ID,
-    version_date: '2016-07-11'
+    version_date: '2016-09-20'
 });
+
 
 
 // Facebook configuration
@@ -31,6 +32,7 @@ console.log(controller.middleware.receive.use(watsonMiddleware.receive));
 
 // Creating Webhook End Points
 controller.createWebhookEndpoints(server, bot);
+console.log(server)
 console.log('Facebook bot is on.');
 
 // Server is active

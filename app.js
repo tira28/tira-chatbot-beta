@@ -31,11 +31,6 @@ var promise = require('es6-promise').Promise;
 // Yelp module
 var Yelp = require('yelpv3');
 
-// Credentials for Yelp module
-/*var yelp = new Yelp({
-    app_id: process.env.YELP_APP_ID,
-    app_secret: process.env.YELP_APP_SECRET
-});*/
 
 // Credentials
 const GOOGLE_API_KEY = process.env.GOOGLE_API_KEY;
@@ -53,12 +48,13 @@ var basicAuth = require( 'basic-auth-connect' );
 // This cloudand db is not required, the app will operate without it.
 // If logging is enabled the app must also enable basic auth to secure logging
 // endpoints
-var cloudantCredentials = vcapServices.getCredentials( 'cloudantNoSQLDB' );
+
+/*var cloudantCredentials = vcapServices.getCredentials( 'cloudantNoSQLDB' );
 var cloudantUrl = null;
 if ( cloudantCredentials ) {
   cloudantUrl = cloudantCredentials.url;
 }
-cloudantUrl = cloudantUrl || process.env.CLOUDANT_URL; // || '<cloudant_url>';
+cloudantUrl = cloudantUrl || process.env.CLOUDANT_URL; // || '<cloudant_url>';*/
 
 
 var logs = null;
@@ -73,7 +69,7 @@ var conversation = watson.conversation( {
   url: 'https://gateway.watsonplatform.net/conversation/api',
   username: process.env.CONVERSATION_USERNAME || '<username>',
   password: process.env.CONVERSATION_PASSWORD || '<password>',
-  version_date: '2016-07-11',
+  version_date: '2016-09-20',
   version: 'v1'
 } );
 
@@ -223,30 +219,30 @@ function updateResponse(res, data) {
               lng: response.data.results[0].geometry.location.lng
           };
           // Dark Sky Credentials and URL
-          /*const DARK_SKY_API = process.env.DARKSKY_API_KEY;
-          var url_weather_dark_sky = `https://api.darksky.net/forecast/${DARK_SKY_API}/${location.lat},${location.lng}`;*/
+          const DARK_SKY_API = process.env.DARKSKY_API_KEY;
+          var url_weather_dark_sky = `https://api.darksky.net/forecast/${DARK_SKY_API}/${location.lat},${location.lng}`;
 
-          // The Weather Company Credentials and URL
+          /*// The Weather Company Credentials and URL
           const WEATHER_COMPANY_USER = process.env.WEATHER_COMPANY_USERNAME;
           const WEATHER_COMPANY_PASS = process.env.WEATHER_COMPANY_PASSWORD;
           const WEATHER_COMPANY_PORT = process.env.WEATHER_COMPANY_PORT;
 
           var url_weather_company = `https://${WEATHER_COMPANY_USER}:${WEATHER_COMPANY_PASS}@twcservice.eu-gb.mybluemix.net:${WEATHER_COMPANY_PORT}/api/weather` + `/v1/geocode/${location.lat}/${location.lng}/forecast/daily/3day.json`;
-
+*/
 
           // call dark sky API to retrieve weather data
-          return axios.get(url_weather_company);
+          return axios.get(url_weather_dark_sky);
       }).then(function(response){
-          console.log(response.data.forecasts[0].day.temp);
-          console.log(response.data.forecasts[0].day.shortcast);
+          /*console.log(response.data.forecasts[0].day.temp);
+          console.log(response.data.forecasts[0].day.shortcast);*/
 
           // Summary for The Weather Company
-          var summary = response.data.forecasts[0].day.shortcast;
-          var apparentTemperature = response.data.forecasts[0].day.temp;
+          /*var summary = response.data.forecasts[0].day.shortcast;
+          var apparentTemperature = response.data.forecasts[0].day.temp;*/
 
           // Summary for Dark Sky API
-          /*var summary = response.data.currently.summary;
-          var apparentTemperature = response.data.currently.apparentTemperature;*/
+          var summary = response.data.currently.summary;
+          var apparentTemperature = response.data.currently.apparentTemperature;
           var city = data.context.appCity;
 
           // make watson returns weather prediction in selected city
@@ -255,6 +251,7 @@ function updateResponse(res, data) {
       }).catch(function(error){
           console.log(error);
       });
+
   } else if (data.intents.length > 0 && data.intents[0].intent === 'get_landmarks'){
       var city = data.context.appCity;
       var landmarks = data.context.landmarks;
@@ -390,10 +387,10 @@ function updateResponse(res, data) {
   } else {
       return res.json(data);
   }
-}
+};
 
 
-if ( cloudantUrl ) {
+/*if ( cloudantUrl ) {
   // If logging has been enabled (as signalled by the presence of the cloudantUrl) then the
   // app developer must also specify a LOG_USER and LOG_PASS env vars.
   if ( !process.env.LOG_USER || !process.env.LOG_PASS ) {
@@ -481,6 +478,6 @@ if ( cloudantUrl ) {
       res.csv( csv );
     } );
   } );
-}
+}*/
 
 module.exports = app;

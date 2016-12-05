@@ -9,6 +9,9 @@ declared-services:
   Cloudant NO SQL DB-at:
     label: Cloudant No SQL DB-at
     plan: Lite
+  Weather Company Data-gl:
+    label: Weather Company Data-gl
+    plan: Free-v2
 
 applications:
 - name: tira-chatbot-beta
@@ -19,4 +22,5 @@ applications:
   - Conversation-8z
   - AlchemyAPI-p7
   - Cloudant No SQL DB-at
+  - Weather Company Data-gl
 
