@@ -32,7 +32,6 @@ console.log(controller.middleware.receive.use(watsonMiddleware.receive));
 
 // Creating Webhook End Points
 controller.createWebhookEndpoints(server, bot);
-console.log(server)
 console.log('Facebook bot is on.');
 
 // Server is active

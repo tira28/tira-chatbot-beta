@@ -36,7 +36,7 @@ var Yelp = require('yelpv3');
 const GOOGLE_API_KEY = process.env.GOOGLE_API_KEY;
 
 // URL QPX
-var url_qpx = `https://www.googleapis.com/qpxExpress/v1/trips/search?key=${GOOGLE_API_KEY}`;
+// var url_qpx = `https://www.googleapis.com/qpxExpress/v1/trips/search?key=${GOOGLE_API_KEY}`;
 
 // The following requires are needed for logging purposes
 var uuid = require( 'uuid' );
@@ -80,8 +80,6 @@ var alchemy_language = watson.alchemy_language({
 
 // Endpoint to be call from the client side
 app.post( '/api/message', function(req, res) {
-    console.log(process.env.WORKSPACE_ID);
-    console.log("11111");
   var workspace = process.env.WORKSPACE_ID || '<workspace-id>';
   if ( !workspace || workspace === '<workspace-id>' ) {
     return res.json( {
@@ -93,7 +91,6 @@ app.post( '/api/message', function(req, res) {
       }
     } );
   }
-    console.log("22222");
 
   var payload = {
     workspace_id: workspace,
@@ -112,7 +109,7 @@ app.post( '/api/message', function(req, res) {
       payload.context = req.body.context;
     }
   }
-    console.log("33333");
+
 
   if(params == null) {
    params = {text: "Some sample input"}
@@ -122,12 +119,10 @@ app.post( '/api/message', function(req, res) {
 
   alchemy_language.entities(params, function(error, response) {
         if (error) {
-            console.log("44444");
             console.log(error);
             return res.status(error.code || 500).json(error);
         }
         if(response != null) {
-            console.log("55555");
 
             var entities = response.entities;
           var cityList = entities.map(function(entry) {
@@ -135,17 +130,16 @@ app.post( '/api/message', function(req, res) {
                  return(entry.text);
                 }
           });
-            console.log("66666");
+
 
             cityList = cityList.filter(function(entry) {
 		if(entry != null) {
-            console.log("77777");
+
 
             return(entry);
 		}
 	  });
 
-    console.log('cityList: ', cityList);
 
 	  if(cityList.length > 0) {
 	   payload.context.appCity = cityList[0];
@@ -164,7 +158,6 @@ app.post( '/api/message', function(req, res) {
 		}
 	  });
 
-    console.log('stateList: ', stateList);
 
 	  if (stateList.length > 0) {
 	   payload.context.appST = stateList[0];
@@ -191,7 +184,6 @@ app.post( '/api/message', function(req, res) {
 
                 // function to update response
                 updateResponse(res, data);
-                console.log(data);
          });
   });
 });
@@ -328,10 +320,21 @@ function updateResponse(res, data) {
           }
       };
 
+      const GOOGLE_API_KEY = process.env.GOOGLE_API_KEY;
+      var url_qpx = `https://www.googleapis.com/qpxExpress/v1/trips/search?key=${GOOGLE_API_KEY}`;
+
       // Calling Google QPX API
       axios.post(url_qpx,flightQuery).then(function(response){
+          console.log(flightQuery);
           var trips = response.data.trips;
-          var tripOption = trips.tripOption[0];
+
+          try {
+              var tripOption = trips.tripOption[0];
+          } catch (e) {
+              console.log('Error in reading API results');
+          }
+
+          // var tripOption = trips.tripOption[0];
           var summary = {
               departure_date: flightQuery.request.slice[0].date,
               return_date: flightQuery.request.slice[1].date,
@@ -372,15 +375,19 @@ function updateResponse(res, data) {
           var returningArrivalTimeMinutes = new Date(flyingTime.returning_flight_arrival_time).getHours();
           var returningArrivalTime = `${returningArrivalTimeHour}:${returningArrivalTimeMinutes}`;
 
-          data.output.text=`Thank you for flying with KLM Royal Dutch Airlines.\n Here is your flight details: 
-          Your departing flight code is: ${summary.departing_flight_code} ${summary.departing_flight_number}.\n 
-          Earliest possible departing time: ${departingDepartureTime}.\n
-          Arrival time: ${departingArrivalTime}.\n
-          Your returning flight code is: ${summary.returning_flight_code} ${summary.returning_flight_number}.\n
+          data.output.text = [`Thank you for flying with KLM Royal Dutch Airlines.\n`, `Here is your flight details:\n`,
+          `Your departing flight code is: ${summary.departing_flight_code} ${summary.departing_flight_number}.\n`,
+          `Earliest possible departing time: ${departingDepartureTime}.\n
+          Arrival time: ${departingArrivalTime}.\n`,
+          `Your returning flight code is: ${summary.returning_flight_code} ${summary.returning_flight_number}.\n
           Earliest possible departing time: ${returningDepartureTime}.\n
-          Arrival time: ${returningArrivalTime}.\n
-          Fare: ${summary.travel_fare}`;
+          Arrival time: ${returningArrivalTime}.\n`,
+          `Fare: ${summary.travel_fare}`];
+
           return res.json(data);
+
+      }).then(function(data){
+
       }).catch(function(error){
           console.log(error);
       });

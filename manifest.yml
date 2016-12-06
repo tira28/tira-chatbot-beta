@@ -1,13 +1,13 @@
 ---
 declared-services:
   conversation-service:
-    label: Conversation-8z
+    label: Conversation-6w
     plan: free
   alchemyAPI-service:
-    label: AlchemyAPI-p7
+    label: AlchemyAPI-9z
     plan: free
   Cloudant NO SQL DB-at:
-    label: Cloudant No SQL DB-at
+    label: Cloudant No SQL DB-6p
     plan: Lite
   Weather Company Data-gl:
     label: Weather Company Data-gl
@@ -19,8 +19,8 @@ applications:
   path: .
   memory: 256M
 - services:
-  - Conversation-8z
-  - AlchemyAPI-p7
-  - Cloudant No SQL DB-at
+  - Conversation-6w
+  - AlchemyAPI-9z
+  - Cloudant No SQL DB-6p
   - Weather Company Data-gl
 
