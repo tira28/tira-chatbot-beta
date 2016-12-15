@@ -199,7 +199,7 @@ app.post( '/api/message', function(req, res) {
 function updateResponse(res, data) {
     // Code for intent equals to get weather
   if (data.intents.length > 0 && data.intents[0].intent === 'get_weather') {
-      //const GOOGLE_API_KEY = process.env.GOOGLE_API_KEY;
+      //const GOOGLE_API_KEY = process.env.GOOGLE_API_KEY;§
       var cityQuery = data.context.appCity;
       var url_geolocation = `https://maps.googleapis.com/maps/api/geocode/json?address=${cityQuery}&key=${GOOGLE_API_KEY}`;
 
@@ -324,17 +324,13 @@ function updateResponse(res, data) {
       var url_qpx = `https://www.googleapis.com/qpxExpress/v1/trips/search?key=${GOOGLE_API_KEY}`;
 
       // Calling Google QPX API
-      axios.post(url_qpx,flightQuery).then(function(response){
-          console.log(flightQuery);
+      axios.post(url_qpx,flightQuery,{
+          timeout:3000
+      }).then(function(response){
+
           var trips = response.data.trips;
+          var tripOption = trips.tripOption[0];
 
-          try {
-              var tripOption = trips.tripOption[0];
-          } catch (e) {
-              console.log('Error in reading API results');
-          }
-
-          // var tripOption = trips.tripOption[0];
           var summary = {
               departure_date: flightQuery.request.slice[0].date,
               return_date: flightQuery.request.slice[1].date,
@@ -382,14 +378,15 @@ function updateResponse(res, data) {
           `Your returning flight code is: ${summary.returning_flight_code} ${summary.returning_flight_number}.\n
           Earliest possible departing time: ${returningDepartureTime}.\n
           Arrival time: ${returningArrivalTime}.\n`,
-          `Fare: ${summary.travel_fare}`];
+          `Fare: ${summary.travel_fare}\n`,'This service is powered by IBM Watson and Google QPX Flight Service'];
 
           return res.json(data);
 
-      }).then(function(data){
-
       }).catch(function(error){
           console.log(error);
+          console.log('There\'s no flight service with KLM on the proposed schedule.');
+          data.output.text = ['I\'m apologise, there\'s no flight service with KLM on the proposed schedule.\n'];
+          return res.json(data);
       });
   } else {
       return res.json(data);
@@ -397,7 +394,7 @@ function updateResponse(res, data) {
 };
 
 
-/*if ( cloudantUrl ) {
+if ( cloudantUrl ) {
   // If logging has been enabled (as signalled by the presence of the cloudantUrl) then the
   // app developer must also specify a LOG_USER and LOG_PASS env vars.
   if ( !process.env.LOG_USER || !process.env.LOG_PASS ) {
@@ -485,6 +482,6 @@ function updateResponse(res, data) {
       res.csv( csv );
     } );
   } );
-}*/
+}
 
 module.exports = app;

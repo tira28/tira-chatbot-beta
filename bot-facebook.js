@@ -242,7 +242,7 @@ controller.hears('(.*)', 'message_received', function(bot, message){
         }).catch(function(err){
             console.log(err);
         });
-    } else if (watsonMessage.intents.length > 0 && watsonMessage.intents[0].intent === 'book_ticket' /*&& watsonMessage.context.remarks === "Results"*/) {
+    } else if (watsonMessage.intents.length > 0 && watsonMessage.intents[0].intent === 'book_ticket' && watsonMessage.context.remarks === "Results") {
 
         // Check whether important data has been loaded
         var travelData = watsonMessage;

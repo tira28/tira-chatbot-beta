@@ -14,25 +14,25 @@ body = {
             {
                 "origin": 'AMS',
                 "destination": 'BCN',
-                "date": '2016-12-06',
+                "date": '2016-12-18',
                 "permittedCarrier": ['KL'],
                 "maxStops": 0,
                 "permittedDepartureTime" : {
                     "kind": "qpxexpress#timeOfDayRange",
-                    "earliestTime":'18:00:00',
+                    "earliestTime":'15:30:00',
                     "latestTime": '23:59:00'
                 },
                 "solutions": 1
             },
             {
-                "origin": 'CDG',
+                "origin": 'BCN',
                 "destination": 'AMS',
                 "date": '2016-12-31',
                 "permittedCarrier": ['KL'],
                 "maxStops": 0,
                 "permittedDepartureTime" : {
                     "kind": "qpxexpress#timeOfDayRange",
-                    "earliestTime":'18:00:00',
+                    "earliestTime":'10:00:00',
                     "latestTime": '23:59:00'
                 },
                 "solutions": 1
@@ -99,5 +99,6 @@ axios.post(url_qpx,body).then(function(data){
     console.log(`Total Cost: ${summary.travel_fare}`);
 }).catch(function(error){
     console.log(error);
+    console.log('I\'m sorry, I cannot find flights on the proposed schedule');
 });
 
