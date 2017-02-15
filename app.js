@@ -27,6 +27,8 @@ var axios = require('axios');
 const cfenv = require('cfenv');
 var promise = require('es6-promise').Promise;
 
+var cloudantUrl;
+
 
 // Yelp module
 var Yelp = require('yelpv3');
@@ -199,7 +201,7 @@ app.post( '/api/message', function(req, res) {
 function updateResponse(res, data) {
     // Code for intent equals to get weather
   if (data.intents.length > 0 && data.intents[0].intent === 'get_weather') {
-      //const GOOGLE_API_KEY = process.env.GOOGLE_API_KEY;§
+      //const GOOGLE_API_KEY = process.env.GOOGLE_API_KEY;
       var cityQuery = data.context.appCity;
       var url_geolocation = `https://maps.googleapis.com/maps/api/geocode/json?address=${cityQuery}&key=${GOOGLE_API_KEY}`;
 
@@ -224,6 +226,7 @@ function updateResponse(res, data) {
 
           // call dark sky API to retrieve weather data
           return axios.get(url_weather_dark_sky);
+
       }).then(function(response){
           /*console.log(response.data.forecasts[0].day.temp);
           console.log(response.data.forecasts[0].day.shortcast);*/
